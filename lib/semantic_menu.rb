@@ -37,7 +37,11 @@ class MenuItem
   end
   
   def on_current_page?
-    current_page?(@link)
+    if @link_opts[:soft] 
+      Regexp.new(@link+".*").match controller.request.env['REQUEST_URI']
+    else
+      current_page?(@link)
+    end
   end
   
   cattr_accessor :controller
