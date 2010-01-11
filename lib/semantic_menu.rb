@@ -38,7 +38,7 @@ class MenuItem
   
   def on_current_page?
     if @link_opts[:regexp] == true
-      Regexp.new(@link+".*").match controller.request.env['REQUEST_URI']
+      Regexp.new("^"+Regexp.escape(@link)+".*").match controller.request.env['REQUEST_URI']
     elsif @link_opts[:regexp].is_a? Regexp
       @link_opts[:regexp].match controller.request.env['REQUEST_URI']
     else
