@@ -24,6 +24,12 @@ class SemanticMenuTest < ActiveSupport::TestCase
                  MenuItem.new("title", "link", 2, :class => 'button').to_s
   end
   
+  def test_menu_item_passes_list_item_options_to_li
+    MenuItem.any_instance.stubs(:active?).returns(false)
+    assert_equal '<li class="item"><a href="link">title</a></li>',
+                 MenuItem.new("title", "link", 2, nil, :class => 'item').to_s
+  end
+
   def test_menu_item_with_one_child
     MenuItem.any_instance.stubs(:active?).returns(false)
     assert_equal '<ul class="mymenu"><li><a href="link">title</a></li></ul>', default_menu.to_s
@@ -62,6 +68,25 @@ class SemanticMenuTest < ActiveSupport::TestCase
 NESTED
     assert_equal expected.gsub(/\n */, '').gsub(/\n/, ''), menu.to_s
   end
+
+  def test_nested_menu_should_pass_sub_menu_options_to_ul
+    MenuItem.any_instance.stubs(:active?).returns(false)
+    menu = SemanticMenu.new(nil) do |root|
+      root.add 'top_level', 'some_page_path', {}, {}, {:id => 'submenu'} do |link1|
+        link1.add 'first_child', 'lower_page_path'
+      end
+    end
+    expected = <<NESTED
+<ul class="menu">
+  <li><a href="some_page_path">top_level</a>
+    <ul class="menu_level_1" id="submenu">
+      <li><a href="lower_page_path">first_child</a></li>
+    </ul>
+  </li>
+</ul>
+NESTED
+    assert_equal expected.gsub(/\n */, '').gsub(/\n/, ''), menu.to_s
+  end
   
   def test_parent_is_active_when_any_child_is
     l1, l1_1, l1_2 = [nil] * 3
@@ -77,6 +102,24 @@ NESTED
     assert l1.active?
   end
   
+  def test_level_class_prefix_settings
+    MenuItem.any_instance.stubs(:active?).returns(false)
+    menu = SemanticMenu.new(nil, :level_class_prefix => 'prefix') do |root|
+      root.add 'item', 'link' do |sub|
+        sub.add 'subitem', 'link2' 
+      end
+    end
+    expected = <<MENU
+<ul class="menu">
+  <li><a href="link">item</a>
+    <ul class="prefix_1">
+      <li><a href="link2">subitem</a></li>
+    </ul>
+  </li>
+</ul>
+MENU
+    assert_equal expected.gsub(/\n */, '').gsub(/\n/, ''), menu.to_s
+  end
   # def test_example_output_for_developer_laziness
   #  MenuItem.any_instance.stubs(:active?).returns(false)
   #  menu = SemanticMenu.new(nil, :class => 'top_level_nav') do |root|

@@ -7,29 +7,32 @@ class MenuItem
           ActionView::Helpers::UrlHelper
   
   attr_accessor :children, :link
+  cattr_accessor :level_class_prefix
   
-  def initialize(title, link, level, link_opts={})
-    @title, @link, @level, @link_opts = title, link, level, link_opts
+  def initialize(title, link, level, link_opts={}, li_opts={}, sub_ul_opts={})
+    @title, @link, @level, @link_opts, @li_opts, @sub_ul_opts = title, link, level, link_opts, li_opts, sub_ul_opts
     @children = []
   end
   
-  def add(title, link, link_opts={}, &block)
-    returning(MenuItem.new(title, link, @level +1, link_opts)) do |adding|
+  def add(title, link, link_opts={}, li_opts={}, sub_ul_opts={}, &block)
+    returning(MenuItem.new(title, link, @level +1, link_opts, li_opts, sub_ul_opts)) do |adding|
       @children << adding
       yield adding if block_given?
     end
   end
   
   def to_s
-    content_tag :li, link_to(@title, @link, @link_opts) + child_output, ({:class => 'active'} if active?)
+    opts = active? ? {:class => 'active'} : {}
+    content_tag :li, link_to(@title, @link, @link_opts) + child_output, opts.merge(@li_opts)
   end
   
   def level_class
-    "menu_level_#{@level}"
+    prefix = @@level_class_prefix || "menu_level"
+    [prefix, @level].join('_')
   end
   
   def child_output
-    children.empty? ? '' : content_tag(:ul, @children.collect(&:to_s).join, :class => level_class)
+    children.empty? ? '' : content_tag(:ul, @children.collect(&:to_s).join, {:class => level_class}.merge(@sub_ul_opts))
   end
   
   def active?
@@ -50,6 +53,7 @@ class SemanticMenu < MenuItem
   
   def initialize(controller, opts={},&block)
    @@controller = controller
+   @@level_class_prefix = opts.delete(:level_class_prefix)
     @opts       = {:class => 'menu'}.merge opts
     @level      = 0
     @children   = []
