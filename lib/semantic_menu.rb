@@ -6,7 +6,7 @@ class MenuItem
   include ActionView::Helpers::TagHelper,
           ActionView::Helpers::UrlHelper
   
-  attr_accessor :children, :link
+  attr_accessor :children, :link, :title
   cattr_accessor :level_class_prefix
   
   def initialize(title, link, level, link_opts={}, li_opts={}, sub_ul_opts={})
